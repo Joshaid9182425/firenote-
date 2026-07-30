@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Plus, Search, Grid3x3, MoreVertical, Trash2, Edit, Moon, Sun, Flame, Layout, Brain, Lightbulb, GitBranch, Columns, Cloud, LogOut, User } from "lucide-react";
+import { Plus, Search, Grid3x3, MoreVertical, Trash2, Edit, Moon, Sun, Flame, Layout, Brain, Lightbulb, GitBranch, Columns, Cloud, LogOut, User, LogIn } from "lucide-react";
 import { boardStore } from "../store/boardStore";
 import { Board } from "../types";
 import { formatDistanceToNow } from "date-fns";
@@ -227,13 +227,13 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Cloud Sync / Account button */}
+              {/* Account / Login button */}
               <button
                 onClick={() => {
                   if (user && supabase) {
                     supabase.auth.signOut().then(() => {
                       setUser(null);
-                      toast.success("Signed out of Supabase");
+                      toast.success("Signed out successfully");
                     });
                   } else {
                     setShowAuthModal(true);
@@ -244,10 +244,10 @@ export function Dashboard() {
                     ? dark ? "bg-emerald-950/60 border-emerald-800 text-emerald-300" : "bg-emerald-50 border-emerald-200 text-emerald-700"
                     : dark ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                 }`}
-                title={user ? `Signed in as ${user.email}` : "Click to set up Supabase Cloud Sync"}
+                title={user ? `Signed in as ${user.email}` : "Sign in to FlameBoard"}
               >
-                <Cloud className={`size-3.5 ${user ? "text-emerald-500" : "text-blue-500"}`} />
-                <span>{user ? user.email.split("@")[0] : "Cloud Sync"}</span>
+                {user ? <User className="size-3.5 text-emerald-500" /> : <LogIn className="size-3.5 text-red-500" />}
+                <span>{user ? user.email.split("@")[0] : "Sign In"}</span>
                 {user ? <LogOut className="size-3 text-emerald-500/70 ml-1" /> : null}
               </button>
 
