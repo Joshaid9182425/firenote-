@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Plus, Search, Grid3x3, MoreVertical, Trash2, Edit, Moon, Sun, Flame, Layout, Brain, Lightbulb, GitBranch, Columns } from "lucide-react";
+import { Plus, Search, Grid3x3, MoreVertical, Trash2, Edit, Moon, Sun, Flame, Layout, Brain, Lightbulb, GitBranch, Columns, Cloud, LogOut, User } from "lucide-react";
 import { boardStore } from "../store/boardStore";
 import { Board } from "../types";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { AuthModal } from "../components/AuthModal";
 
 // ── Templates ────────────────────────────────────────────────────────────────
 const TEMPLATES = [
@@ -88,13 +90,39 @@ export function Dashboard() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [promptData, setPromptData] = useState<{title: string; value: string; onConfirm: (val: string) => void} | null>(null);
   const [confirmData, setConfirmData] = useState<{title: string; onConfirm: () => void} | null>(null);
   const [dark, setDark] = useState(() => localStorage.getItem("flaimboard-theme") === "dark");
   const navigate = useNavigate();
 
   useEffect(() => { localStorage.setItem("flaimboard-theme", dark ? "dark" : "light"); }, [dark]);
-  useEffect(() => { setBoards(boardStore.getBoards()); }, []);
+  useEffect(() => {
+    setBoards(boardStore.getBoards());
+
+    if (supabase && isSupabaseConfigured) {
+      supabase.auth.getSession().then(({ data }) => {
+        setUser(data.session?.user ?? null);
+        if (data.session?.user) {
+          boardStore.fetchRemoteBoards().then((remote) => {
+            if (remote) setBoards(remote);
+          });
+        }
+      });
+
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          boardStore.fetchRemoteBoards().then((remote) => {
+            if (remote) setBoards(remote);
+          });
+        }
+      });
+
+      return () => listener.subscription.unsubscribe();
+    }
+  }, []);
 
   const handleCreateBoard = () => setShowTemplateModal(true);
 
@@ -199,6 +227,30 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Cloud Sync / Account button */}
+              <button
+                onClick={() => {
+                  if (user && supabase) {
+                    supabase.auth.signOut().then(() => {
+                      setUser(null);
+                      toast.success("Signed out of Supabase");
+                    });
+                  } else {
+                    setShowAuthModal(true);
+                  }
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  user
+                    ? dark ? "bg-emerald-950/60 border-emerald-800 text-emerald-300" : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    : dark ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}
+                title={user ? `Signed in as ${user.email}` : "Click to set up Supabase Cloud Sync"}
+              >
+                <Cloud className={`size-3.5 ${user ? "text-emerald-500" : "text-blue-500"}`} />
+                <span>{user ? user.email.split("@")[0] : "Cloud Sync"}</span>
+                {user ? <LogOut className="size-3 text-emerald-500/70 ml-1" /> : null}
+              </button>
+
               {/* Dark mode toggle */}
               <div onClick={() => setDark(!dark)} className="cursor-pointer select-none"
                 style={{ position: "relative", width: 64, height: 32, borderRadius: 999, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", background: dark ? "rgba(30,20,60,0.55)" : "rgba(255,255,255,0.35)", border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(255,255,255,0.7)", boxShadow: dark ? "0 4px 24px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08)" : "0 4px 16px rgba(0,0,0,0.12),inset 0 1px 0 rgba(255,255,255,0.8)", transition: "all 0.3s ease" }}>
@@ -321,6 +373,9 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Supabase Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} dark={dark} />
     </div>
   );
 }
