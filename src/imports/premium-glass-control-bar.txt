@@ -1,0 +1,258 @@
+Good catch 👌 — that bottom zoom area and grid selector should not look cramped. Let’s redesign it properly and stretch it into a premium glass control bar.
+
+We’ll:
+
+• Stretch bottom zoom controls
+• Improve spacing
+• Add animated grid selector
+• Add clean toggle system
+• Make it responsive
+• Keep liquid glass styling
+
+All in Compose.
+
+⸻
+
+✅ 1️⃣ Stretch Bottom Zoom Panel (Make It Premium)
+
+Instead of small cramped controls, create a wide floating control bar.
+
+⸻
+
+🔹 New Bottom Control Bar
+
+@Composable
+fun BottomControlBar(
+    zoomLevel: Float,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    onGridChange: (GridType) -> Unit
+) {
+
+    LiquidGlass(
+        modifier = Modifier
+            .padding(bottom = 24.dp)
+            .fillMaxWidth(0.92f)
+            .height(90.dp)
+            .align(Alignment.BottomCenter),
+        blurRadius = 55f
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 32.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            ZoomControls(
+                zoomLevel = zoomLevel,
+                onZoomIn = onZoomIn,
+                onZoomOut = onZoomOut
+            )
+
+            GridSelector(onGridChange)
+        }
+    }
+}
+
+Now it’s stretched and centered.
+
+⸻
+
+✅ 2️⃣ Better Zoom Controls (Clean & Balanced)
+
+⸻
+
+🔹 Zoom Controls
+
+@Composable
+fun ZoomControls(
+    zoomLevel: Float,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+
+        IconButton(onClick = onZoomOut) {
+            Icon(Icons.Default.Remove, contentDescription = "Zoom Out")
+        }
+
+        Text(
+            text = "${(zoomLevel * 100).toInt()}%",
+            fontSize = 18.sp
+        )
+
+        IconButton(onClick = onZoomIn) {
+            Icon(Icons.Default.Add, contentDescription = "Zoom In")
+        }
+    }
+}
+
+Now it feels balanced and readable.
+
+⸻
+
+✅ 3️⃣ Grid Selector (Proper Upgrade)
+
+Instead of basic toggle, we create a segmented selector.
+
+⸻
+
+🔹 Grid Types
+
+enum class GridType {
+    NONE,
+    DOTS,
+    LINES,
+    GRAPH
+}
+
+
+⸻
+
+🔹 Improved Grid Selector
+
+@Composable
+fun GridSelector(onGridChange: (GridType) -> Unit) {
+
+    var selected by remember { mutableStateOf(GridType.DOTS) }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        GridOption("None", GridType.NONE, selected) {
+            selected = it
+            onGridChange(it)
+        }
+
+        GridOption("Dots", GridType.DOTS, selected) {
+            selected = it
+            onGridChange(it)
+        }
+
+        GridOption("Lines", GridType.LINES, selected) {
+            selected = it
+            onGridChange(it)
+        }
+
+        GridOption("Graph", GridType.GRAPH, selected) {
+            selected = it
+            onGridChange(it)
+        }
+    }
+}
+
+
+⸻
+
+🔹 Grid Option Button (Glass Chip Style)
+
+@Composable
+fun GridOption(
+    label: String,
+    type: GridType,
+    selected: GridType,
+    onSelect: (GridType) -> Unit
+) {
+
+    val isSelected = type == selected
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                if (isSelected)
+                    Color.White.copy(alpha = 0.35f)
+                else
+                    Color.Transparent
+            )
+            .clickable { onSelect(type) }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp
+        )
+    }
+}
+
+Now it looks modern and not cramped.
+
+⸻
+
+✅ 4️⃣ Make Grid Actually Render Properly
+
+Add grid rendering in Canvas:
+
+⸻
+
+🔹 Draw Dots Grid
+
+fun DrawScope.drawDotGrid(spacing: Float = 40f) {
+    val rows = (size.height / spacing).toInt()
+    val cols = (size.width / spacing).toInt()
+
+    for (i in 0..cols) {
+        for (j in 0..rows) {
+            drawCircle(
+                color = Color.Gray.copy(alpha = 0.2f),
+                radius = 2f,
+                center = Offset(i * spacing, j * spacing)
+            )
+        }
+    }
+}
+
+
+⸻
+
+🔹 Draw Line Grid
+
+fun DrawScope.drawLineGrid(spacing: Float = 40f) {
+    for (x in 0..size.width.toInt() step spacing.toInt()) {
+        drawLine(
+            Color.Gray.copy(alpha = 0.15f),
+            Offset(x.toFloat(), 0f),
+            Offset(x.toFloat(), size.height)
+        )
+    }
+
+    for (y in 0..size.height.toInt() step spacing.toInt()) {
+        drawLine(
+            Color.Gray.copy(alpha = 0.15f),
+            Offset(0f, y.toFloat()),
+            Offset(size.width, y.toFloat())
+        )
+    }
+}
+
+
+⸻
+
+✅ 5️⃣ Final Result
+
+Your bottom bar now:
+
+✔ Is stretched properly
+✔ Has clean spacing
+✔ Has readable zoom percentage
+✔ Has modern grid selector
+✔ Matches liquid glass aesthetic
+✔ Feels like a premium tablet app
+
+⸻
+
+If you want next-level polish, I can:
+
+• Make zoom slider draggable instead of buttons
+• Add mini-map navigation
+• Add animated grid transitions
+• Add snapping indicator
+
+Tell me how advanced you want to go before tomorrow.
